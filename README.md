@@ -1,3 +1,10 @@
+###
+```
+export PYTHONPATH=/mnt/sda1/segment-anything-2-real-time:$PYTHONPATH
+cd demo
+python demo_click_video.py
+```
+
 # segment-anything-2 real-time
 Run Segment Anything Model 2 on a **live video stream**
 

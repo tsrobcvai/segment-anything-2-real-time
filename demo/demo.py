@@ -18,8 +18,8 @@ from sam2.build_sam import build_sam2_camera_predictor
 import time
 
 
-sam2_checkpoint = "../checkpoints/sam2.1_hiera_small.pt"
-model_cfg = "configs/sam2.1/sam2.1_hiera_s.yaml"
+sam2_checkpoint = "../checkpoints/sam2.1_hiera_tiny.pt"
+model_cfg = "configs/sam2.1/sam2.1_hiera_t.yaml"
 
 predictor = build_sam2_camera_predictor(model_cfg, sam2_checkpoint)
 
@@ -48,18 +48,18 @@ while True:
 
 
         ##! add points, `1` means positive click and `0` means negative click
-        # points = np.array([[660, 267]], dtype=np.float32)
-        # labels = np.array([1], dtype=np.int32)
+        points = np.array([[660, 267], [250, 220]], dtype=np.float32) # np.array([[210, 350], [250, 220]], dtype=np.float32)
+        labels = np.array([1,1], dtype=np.int32)
 
-        # _, out_obj_ids, out_mask_logits = predictor.add_new_prompt(
-        #     frame_idx=ann_frame_idx, obj_id=ann_obj_id, points=points, labels=labels
-        # )
+        _, out_obj_ids, out_mask_logits = predictor.add_new_prompt(
+            frame_idx=ann_frame_idx, obj_id=ann_obj_id, points=points, labels=labels
+        )
 
         ## ! add bbox
-        bbox = np.array([[600, 214], [765, 286]], dtype=np.float32)
-        _, out_obj_ids, out_mask_logits = predictor.add_new_prompt(
-            frame_idx=ann_frame_idx, obj_id=ann_obj_id, bbox=bbox
-        )
+        # bbox = np.array([[600, 214], [765, 286]], dtype=np.float32)
+        # _, out_obj_ids, out_mask_logits = predictor.add_new_prompt(
+        #     frame_idx=ann_frame_idx, obj_id=ann_obj_id, bbox=bbox
+        # )
 
         ##! add mask
         # mask_img_path="../notebooks/masks/aquarium/aquarium_mask.png"

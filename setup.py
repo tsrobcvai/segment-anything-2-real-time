@@ -22,8 +22,8 @@ with open("README.md", "r") as f:
 
 # Required dependencies
 REQUIRED_PACKAGES = [
-    "torch>=2.3.1",
-    "torchvision>=0.18.1",
+    "torch>=2.3.1", # "torch==1.12.1"
+    "torchvision>=0.18.1", # torchvision==0.13.1
     "numpy>=1.24.4",
     "tqdm>=4.66.1",
     "hydra-core>=1.3.2",
@@ -66,7 +66,7 @@ setup(
     packages=find_packages(exclude="notebooks"),
     install_requires=REQUIRED_PACKAGES,
     extras_require=EXTRA_PACKAGES,
-    python_requires=">=3.10.0",
+    python_requires=">=3.9.0",
     ext_modules=get_extensions(),
     cmdclass={"build_ext": BuildExtension.with_options(no_python_abi_suffix=True)},
 )
