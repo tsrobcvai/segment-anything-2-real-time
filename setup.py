@@ -37,19 +37,19 @@ EXTRA_PACKAGES = {
 }
 
 
-def get_extensions():
-    srcs = ["sam2/csrc/connected_components.cu"]
-    compile_args = {
-        "cxx": [],
-        "nvcc": [
-            "-DCUDA_HAS_FP16=1",
-            "-D__CUDA_NO_HALF_OPERATORS__",
-            "-D__CUDA_NO_HALF_CONVERSIONS__",
-            "-D__CUDA_NO_HALF2_OPERATORS__",
-        ],
-    }
-    ext_modules = [CUDAExtension("sam2._C", srcs, extra_compile_args=compile_args)]
-    return ext_modules
+# def get_extensions():
+#     srcs = ["sam2/csrc/connected_components.cu"]
+#     compile_args = {
+#         "cxx": [],
+#         "nvcc": [
+#             "-DCUDA_HAS_FP16=1",
+#             "-D__CUDA_NO_HALF_OPERATORS__",
+#             "-D__CUDA_NO_HALF_CONVERSIONS__",
+#             "-D__CUDA_NO_HALF2_OPERATORS__",
+#         ],
+#     }
+#     ext_modules = [CUDAExtension("sam2._C", srcs, extra_compile_args=compile_args)]
+#     return ext_modules
 
 
 # Setup configuration
@@ -66,7 +66,7 @@ setup(
     packages=find_packages(exclude="notebooks"),
     install_requires=REQUIRED_PACKAGES,
     extras_require=EXTRA_PACKAGES,
-    python_requires=">=3.10.0",
-    ext_modules=get_extensions(),
+    python_requires=">=3.9.0",
+    # ext_modules=get_extensions(),
     cmdclass={"build_ext": BuildExtension.with_options(no_python_abi_suffix=True)},
 )
