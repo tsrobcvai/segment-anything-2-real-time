@@ -8,25 +8,23 @@ import time
 # --------------------------------
 # Global Parameters
 # --------------------------------
-# SAM2_CHECKPOINT = "../checkpoints/sam2.1_hiera_tiny.pt"
-# MODEL_CFG = "configs/sam2.1/sam2.1_hiera_t.yaml"
+SAM2_CHECKPOINT = "../checkpoints/sam2.1_hiera_tiny.pt"
+MODEL_CFG = "configs/sam2.1/sam2.1_hiera_t.yaml"
 
 # SAM2_CHECKPOINT = "../checkpoints/sam2.1_hiera_base_plus.pt"
 # MODEL_CFG = "configs/sam2.1/sam2.1_hiera_b+.yaml"
 
-SAM2_CHECKPOINT = "../checkpoints/sam2.1_hiera_large.pt"
-MODEL_CFG = "configs/sam2.1/sam2.1_hiera_l.yaml"
+# SAM2_CHECKPOINT = "../checkpoints/sam2.1_hiera_large.pt"
+# MODEL_CFG = "configs/sam2.1/sam2.1_hiera_l.yaml"
 
 
-INPUT_VIDEO = "../notebooks/videos_merged/merged_webcam_1.mp4" # webcam_2_merged.mp4
-OUTPUT_VIDEO = "../notebooks/videos_merged/merged_webcam_1_masked.mp4" # webcam_2_masked.mp4
+INPUT_VIDEO = "../demo/reference_img/1.mp4" # webcam_2_merged.mp4
+OUTPUT_VIDEO = "../demo/reference_img/1_masked.mp4" # webcam_2_masked.mp4
+REFER_IMAGE = "/mnt/sda1/segment-anything-2-real-time/demo/reference_img/0.jpg"
 Prompt_frame_id = 1 # 50
 # Set to True to process frames as fast as possible (and not display them)
 FAST_PROCESSING = False  # False True
-Rack_include = True # Gripper also
-
-
-
+Rack_include = False # Gripper also
 
 # # NEW: Resizing factor (e.g., 0.5 to half the resolution, 1.0 for original)
 # RESIZE_FACTOR = 1
@@ -64,8 +62,27 @@ def mouse_callback_rack(event, x, y, flags, param):
         rack_labels.append(0)  # Label for not rack
         print("Rack clicked (Negative):", (x, y))
 
+def get_points(slot_id, single_class):
+    points_dict =\
+    {"1": {"rebar_points_np": [[630, 378],[765, 374],[529, 859],[599, 859],[519, 1348],[572, 1342]], "rebar_labels_np": [1,1,1,1,1,1] },
+     # "2": {"rebar_points_np": np.array(rebar_points), "rebar_labels_np": np.array(rebar_labels)},
+     # "3": {"rebar_points_np": np.array(rebar_points), "rebar_labels_np": np.array(rebar_labels)},
+     # "4": {"rebar_points_np": np.array(rebar_points), "rebar_labels_np": np.array(rebar_labels)},
+     # "5": {"rebar_points_np": np.array(rebar_points), "rebar_labels_np": np.array(rebar_labels)},
+     # "6": {"rebar_points_np": np.array(rebar_points), "rebar_labels_np": np.array(rebar_labels)},
+     }
 
-def main():
+    return points_dict[slot_id]["rebar_points_np"], points_dict[slot_id]["rebar_labels_np"], None, None
+
+def get_refer_frame(slot_id):
+    img_paths =  {"1": "/mnt/sda1/segment-anything-2-real-time/demo/reference_img/0.jpg",
+     }
+    first_frame = cv2.imread(img_paths[slot_id])
+    return first_frame
+
+
+
+def main(slot_id=None, single_class=False, manual=True):
     global rebar_points, rack_points, rebar_labels, rack_labels
 
     cap = cv2.VideoCapture(INPUT_VIDEO)
@@ -97,61 +114,81 @@ def main():
     resized_w, resized_h = orig_w, orig_h
     first_frame_resized = first_frame
 
-    # --- Step 1: Gather user clicks on the resized first frame ---
-    cv2.namedWindow("Select Rebar (first frame)")
-    cv2.setMouseCallback("Select Rebar (first frame)", mouse_callback_rebar)
-    while True:
-        # Convert back to BGR for displaying with OpenCV
-        display_frame = cv2.cvtColor(first_frame_resized, cv2.COLOR_RGB2BGR)
-        cv2.imshow("Select Rebar (first frame)", display_frame)
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            break
-    cv2.destroyWindow("Select Rebar (first frame)")
-
-    if Rack_include:
-        cv2.namedWindow("Select Rack (first frame)")
-        cv2.setMouseCallback("Select Rack (first frame)", mouse_callback_rack)
+    if manual:
+        # --- Step 1: Gather user clicks on the resized first frame ---
+        cv2.namedWindow("Select Rebar (first frame)")
+        cv2.setMouseCallback("Select Rebar (first frame)", mouse_callback_rebar)
         while True:
+            # Convert back to BGR for displaying with OpenCV
             display_frame = cv2.cvtColor(first_frame_resized, cv2.COLOR_RGB2BGR)
-            cv2.imshow("Select Rack (first frame)", display_frame)
+            cv2.imshow("Select Rebar (first frame)", display_frame)
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
-        cv2.destroyWindow("Select Rack (first frame)")
+        cv2.destroyWindow("Select Rebar (first frame)")
 
-    if not rebar_points and not rack_points:
-        print("No points selected.")
-        cap.release()
-        return
+        if Rack_include:
+            cv2.namedWindow("Select Rack (first frame)")
+            cv2.setMouseCallback("Select Rack (first frame)", mouse_callback_rack)
+            while True:
+                display_frame = cv2.cvtColor(first_frame_resized, cv2.COLOR_RGB2BGR)
+                cv2.imshow("Select Rack (first frame)", display_frame)
+                if cv2.waitKey(1) & 0xFF == ord("q"):
+                    break
+            cv2.destroyWindow("Select Rack (first frame)")
 
-    # Convert click points and labels to NumPy arrays.
-    rebar_points = np.array(rebar_points, dtype=np.float32)
-    rebar_labels = np.array(rebar_labels, dtype=np.int32)
-    rack_points = np.array(rack_points, dtype=np.float32)
-    rack_labels = np.array(rack_labels, dtype=np.int32)
+        if not rebar_points and not rack_points:
+            print("No points selected.")
+            cap.release()
+            return
 
-    print("Rebar points:", rebar_points)
-    print("Rebar labels:", rebar_labels)
-    print("Rack points:", rack_points)
-    print("Rack labels:", rack_labels)
+        # Convert click points and labels to NumPy arrays.
+        rebar_points = np.array(rebar_points, dtype=np.float32)
+        rebar_labels = np.array(rebar_labels, dtype=np.int32)
+        rack_points = np.array(rack_points, dtype=np.float32)
+        rack_labels = np.array(rack_labels, dtype=np.int32)
 
-    # Load the first (resized) frame into the predictor.
-    predictor.load_first_frame(first_frame_resized)
+        print("Rebar points:", rebar_points)
+        print("Rebar labels:", rebar_labels)
+        print("Rack points:", rack_points)
+        print("Rack labels:", rack_labels)
 
-    # Add prompts for rebar (obj_id=1)
-    _, rebar_out_ids, rebar_out_logits = predictor.add_new_prompt(
-        frame_idx=0,
-        obj_id=1,
-        points=rebar_points,
-        labels=rebar_labels
-    )
+        # Load the first (resized) frame into the predictor.
+        predictor.load_first_frame(first_frame_resized)
 
-    if Rack_include:
-        # (Optionally, add prompts for rack as well (obj_id=2))
-        _, rack_out_ids, rack_out_logits = predictor.add_new_prompt(
+        # Add prompts for rebar (obj_id=1)
+        _, rebar_out_ids, rebar_out_logits = predictor.add_new_prompt(
             frame_idx=0,
-            obj_id=2,
-            points=rack_points,
-            labels=rack_labels
+            obj_id=1,
+            points=rebar_points,
+            labels=rebar_labels
+        )
+
+        if Rack_include:
+            # (Optionally, add prompts for rack as well (obj_id=2))
+            _, rack_out_ids, rack_out_logits = predictor.add_new_prompt(
+                frame_idx=0,
+                obj_id=2,
+                points=rack_points,
+                labels=rack_labels
+            )
+
+
+
+    else:
+        rebar_points_np, rebar_labels_np, rack_points_np, rack_labels_np = get_points(slot_id, single_class)
+        if single_class:
+            pass
+        else:
+            raise NotImplementedError
+        frame_bgr = get_refer_frame(slot_id)
+        frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
+        frame_resized = cv2.resize(frame_rgb, (resized_w, resized_h))
+        predictor.load_first_frame(frame_resized)
+        _, rebar_out_ids, rebar_out_logits = predictor.add_new_prompt(
+            frame_idx=0,
+            obj_id=1,
+            points=rebar_points_np,
+            labels=rebar_labels_np
         )
 
     # Use the original video properties for the output video.
@@ -159,14 +196,14 @@ def main():
     # Note: Output video will be at the original resolution.
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
     out = cv2.VideoWriter(OUTPUT_VIDEO, fourcc, fps, (orig_w, orig_h))
-
     # Now reset to the first frame
     cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+
     while True:
         ret, frame = cap.read()
         if not ret:
             break
-        start_time = time.time()
+
 
         # NEW: Resize the current frame before processing.
         frame_resized = cv2.resize(frame, (resized_w, resized_h))
@@ -180,7 +217,10 @@ def main():
             continue
 
         # Track rebar on the resized frame.
+        torch.cuda.synchronize()
+        start_time = time.time()
         rebar_out_ids, rebar_out_logits = predictor.track(frame_resized_rgb)
+
         # Create a mask for the resized frame.
         rebar_mask = np.zeros((resized_h, resized_w), dtype=np.uint8)
         for i in range(len(rebar_out_ids)):
@@ -202,8 +242,9 @@ def main():
         # Apply the upscaled mask to the original frame.
         masked_frame = cv2.bitwise_and(frame, frame, mask=all_mask)
         out.write(masked_frame)
+        torch.cuda.synchronize()
         end_time = time.time()
-        print(f"Segment time: {end_time - start_time:.3f} seconds")
+        print(f"Segment time: {end_time - start_time:.3f} seconds") # 0.057 seconds
         # Show frames only if FAST_PROCESSING is False.
         if not FAST_PROCESSING:
             overlay = cv2.addWeighted(frame, 1.0, cv2.cvtColor(all_mask, cv2.COLOR_GRAY2BGR), 0.5, 0)
@@ -229,4 +270,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(slot_id="1", single_class=True, manual=True)

@@ -180,6 +180,7 @@ def main():
             continue
 
         # Track rebar on the resized frame.
+
         rebar_out_ids, rebar_out_logits = predictor.track(frame_resized_rgb)
         # Create a mask for the resized frame.
         rebar_mask = np.zeros((resized_h, resized_w), dtype=np.uint8)
