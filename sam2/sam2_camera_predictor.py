@@ -804,7 +804,7 @@ class SAM2CameraPredictor(SAM2Base):
         output_dict = self.condition_state["output_dict"]
         obj_ids = self.condition_state["obj_ids"]
         batch_size = self._get_obj_num()
-
+        import pdb;pdb.set_trace()
         # Retrieve correct image features
         (
             _,

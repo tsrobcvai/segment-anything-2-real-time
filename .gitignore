@@ -8,3 +8,16 @@ build/*
 _C.*
 outputs/*
 checkpoints/*.pt
+*.jpg
+*.png
+*.jpeg
+*.gif
+*.mp4
+*.avi
+*.mov
+*.webm
+*.webp
+*.svg
+*.ico
+notebooks/*
+notebooks
