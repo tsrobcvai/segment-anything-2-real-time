@@ -1,12 +1,28 @@
-###
+# Snaity test
 ```
 export PYTHONPATH=/mnt/sda1/segment-anything-2-real-time:$PYTHONPATH
 cd demo
 python demo_click_video.py
 ```
+# Test rebar side segmentation
+```
+cd demo
+python demo_click_img_mask_prompt.py # mask prompt only
+python demo_click_img_mask_prompt.py --use_points True # mask prompt and point prompt
+```
+### we could find some limitations of SAM2 rebar segmentation
+* It cannot identify the correct rebar segment, espically when there is a large rebar in hand pose difference.
+* We need the reference image.
+
+
+## Get first frame and lable mask script can be found in [here](notebooks/videos/Readme.md)
+
+# Below is original segment-anything-2 real-time Readme
 
 # segment-anything-2 real-time
 Run Segment Anything Model 2 on a **live video stream**
+
+
 
 ## News
 - 13/12/2024 : Update to sam2.1
